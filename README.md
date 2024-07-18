@@ -1,2 +1,3 @@
-# jet_clustering
-Repo to store a small tutorial / getting-started for jet clustering
+# Jet Clustering with `fastjet`
+
+Short tutorial for getting started with some jet clustering using `fastjet` in python.
