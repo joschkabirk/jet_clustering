@@ -1,0 +1,19 @@
+[project]
+name = "jet-clustering"
+version = "0.1.0"
+description = "Short tutorial for getting started with jet clustering using fastjet in Python"
+requires-python = ">=3.9"
+dependencies = [
+    "awkward>=2.0",
+    "fastjet>=3.4",
+    "matplotlib>=3.7",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "vector>=1.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "jupyterlab>=4.0",
+    "ipykernel>=6.0",
+]
