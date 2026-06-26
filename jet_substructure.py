@@ -139,6 +139,65 @@ class JetSubstructure:
         )
         self.tau3 = ak.sum(self.pt_i * min_delta_r, axis=1) / self.d0
 
+    def get_subjettiness_illustration_data(self, jet_idx: int, N: int = 2) -> dict:
+        """Return data needed to illustrate the tau_N subjettiness calculation for a single jet.
+
+        Parameters
+        ----------
+        jet_idx : int
+            Index of the jet to illustrate.
+        N : int, optional
+            Number of subjets (1, 2, or 3), by default 2.
+
+        Returns
+        -------
+        dict with keys:
+            "constituents": dict with "eta", "phi", "pt" arrays (one entry per particle)
+            "subjet_axes": dict with "eta", "phi" arrays (one entry per subjet axis)
+            "subjet_assignment": int array — index of the nearest subjet axis per particle
+            "distances": float array — ΔR to the nearest subjet axis per particle (the
+                         values that enter the tau_N sum, before the beta exponent)
+        """
+        if N not in (1, 2, 3):
+            raise ValueError("N must be 1, 2, or 3")
+
+        exclusive_jets_map = {
+            1: self.exclusive_jets_1,
+            2: self.exclusive_jets_2,
+            3: self.exclusive_jets_3,
+        }
+        axes = exclusive_jets_map[N][jet_idx]  # shape: (N,)
+        particles = self.particles[jet_idx]  # shape: (n_particles,)
+
+        # ΔR from each particle to each subjet axis using vector's deltaR
+        # axes[i] is a scalar; wrap it in a length-1 array so deltaR can broadcast
+        delta_r_per_axis = np.stack(
+            [
+                np.array(particles.deltaR(ak.unflatten(axes[i : i + 1], counts=1)[0]))
+                for i in range(N)
+            ],
+            axis=1,
+        )  # shape: (n_particles, N)
+
+        subjet_assignment = np.argmin(
+            delta_r_per_axis, axis=1
+        )  # nearest axis per particle
+        distances = delta_r_per_axis[np.arange(len(particles)), subjet_assignment]
+
+        return {
+            "constituents": {
+                "eta": np.array(particles.eta),
+                "phi": np.array(particles.phi),
+                "pt": np.array(particles.pt),
+            },
+            "subjet_axes": {
+                "eta": np.array(axes.eta),
+                "phi": np.array(axes.phi),
+            },
+            "subjet_assignment": subjet_assignment,
+            "distances": distances,
+        }
+
     def get_substructure_as_ak_array(self):
         """Return the substructure variables as a dictionary."""
         return ak.Array(
